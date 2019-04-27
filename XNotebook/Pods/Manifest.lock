@@ -1,0 +1,22 @@
+PODS:
+  - Masonry (1.0.2)
+  - Realm (2.9.1):
+    - Realm/Headers (= 2.9.1)
+  - Realm/Headers (2.9.1)
+
+DEPENDENCIES:
+  - Masonry
+  - Realm
+
+SPEC REPOS:
+  https://github.com/cocoapods/specs.git:
+    - Masonry
+    - Realm
+
+SPEC CHECKSUMS:
+  Masonry: 7c429b56da9d4ee0bbb3ed77a5ea710d6a5df39e
+  Realm: f91fb43bd474c4f731a116ebf7392c75dd015920
+
+PODFILE CHECKSUM: 2a88b5bcb84adb8eacdaf15d6b8319d92e38320e
+
+COCOAPODS: 1.7.0.beta.3

@@ -1,0 +1,5 @@
+XSym
+0049
+cb875c1466808ec95ea9b3690b8b1b9e
+../../../Realm/include/RLMSyncPermissionResults.h
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                              

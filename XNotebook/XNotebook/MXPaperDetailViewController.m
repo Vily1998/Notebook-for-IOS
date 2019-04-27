@@ -1,0 +1,200 @@
+//
+//  MXPaperDetailViewController.m
+//  MXNotebook
+//
+//  Created by yellow on 2017/8/2.
+//  Copyright © 2017年 yellow. All rights reserved.
+//
+
+#import "MXPaperDetailViewController.h"
+#import "MXPaper.h"
+#import "MXTopic.h"
+#import "MXRealmManager.h"
+#import "MXPaperDetailTableViewCell.h"
+#import "MXEventDetailController.h"
+#import "MXAlert.h"
+#import <objc/runtime.h>
+
+@interface MXPaperDetailViewController ()<UITableViewDelegate,UITableViewDataSource,UIScrollViewDelegate,MXPaperDetailTableViewCellDelegate>
+@property (strong, nonatomic) UITableView *tableView;
+@property (strong, nonatomic) UIView *buttonView;
+@property (assign, nonatomic) BOOL popMark;
+@property (strong, nonatomic) NSDate *chooseDate;
+@property (strong, nonatomic) UIView *tableViewBackgroundView;
+@property (copy, nonatomic)   NSString *content;
+@end
+
+@implementation MXPaperDetailViewController
+
+- (instancetype)init {
+    if (self = [super init]) {
+        self.hideNavBar = YES;
+    }
+    return self;
+}
+
+- (void)viewDidLoad {
+    [super viewDidLoad];
+    self.barStyle = @"Default";
+    self.content = self.paper.name;
+    [self.view addSubview:self.tableView];
+}
+
+- (void)save {
+    [self.view endEditing:YES];
+    if (self.content.length == 0) {
+        [MXAlert hud:@"请输入标题"];
+        return;
+    }
+if (self.type == PaperAdd) {
+        MXPaper *paper = [[MXPaper alloc]init];
+        paper.topicID = self.topic.ID;
+        paper.name = self.content;
+        paper.date = self.chooseDate ? self.chooseDate : [NSDate date];
+    MXEventDetailController *vc = [[MXEventDetailController alloc]init];
+    vc.type = PaperAdd;
+    vc.topic = self.topic;
+    vc.paper = paper;
+    vc.hideNavBar = YES;
+    [self.navigationController pushViewController:vc animated:YES];
+    } else if (self.type == PaperUpdate) {
+        [MXRealmManager update:^(RLMRealm *realm) {
+            if (self.chooseDate) {
+                self.paper.date = self.chooseDate;
+            }
+            self.paper.name = self.content;
+        }];
+        MXEventDetailController *vc = [[MXEventDetailController alloc]init];
+        vc.type = PaperUpdate;
+        vc.topic = self.topic;
+        vc.paper = self.paper;
+        vc.newfilePath=self.paper.filePath;
+        vc.hideNavBar = YES;
+    [self.navigationController pushViewController:vc animated:YES];
+    }
+}
+
+#pragma mark - ScrollView Delegate
+- (void)scrollViewDidScroll:(UIScrollView *)scrollView {
+    if (scrollView == self.tableView) {
+        if (scrollView.contentOffset.y < -100) {
+            self.popMark = YES;
+        }
+    }
+}
+
+- (void)scrollViewWillEndDragging:(UIScrollView *)scrollView withVelocity:(CGPoint)velocity targetContentOffset:(inout CGPoint *)targetContentOffset {
+    if (self.popMark) {
+        [self backAction];
+    }
+}
+
+#pragma mark - Table view data source
+
+- (NSInteger)numberOfSectionsInTableView:(UITableView *)tableView {
+    return 1;
+}
+
+- (NSInteger)tableView:(UITableView *)tableView numberOfRowsInSection:(NSInteger)section {
+    return 1;
+}
+
+- (CGFloat)tableView:(UITableView *)tableView heightForRowAtIndexPath:(NSIndexPath *)indexPath {
+    return 170;
+}
+
+- (UITableViewCell *)tableView:(UITableView *)tableView cellForRowAtIndexPath:(NSIndexPath *)indexPath {
+    MXPaperDetailTableViewCell *cell = [tableView dequeueReusableCellWithIdentifier:@"cell" forIndexPath:indexPath];
+    cell.delegate = self;
+    [cell setType:self.type Topic:self.topic andPaper:self.paper];
+    return cell;
+}
+
+#pragma mark - Cell代理
+- (void)textFieldFinishContent:(NSString *)content {
+    NSLog(@"content:%@",content);
+    self.content = content;
+}
+
+- (void)tapDateCell {
+    NSLog(@"tap");
+    MXAlert *alert = [MXAlert alertDatePickerWithTitle:@"请选择日期" buttonTitles:@[@"取消", @"确定"] action:^(NSInteger index, NSDate * _Nullable date) {
+        self.chooseDate = date;
+        [[NSNotificationCenter defaultCenter] postNotificationName:@"NewDate" object:date];
+    }];
+    [alert addDatePicker:^(UIDatePicker * _Nullable picker) {
+        //设置当前日期
+        if (!self.chooseDate) {
+            picker.date = (self.type == PaperAdd ? [NSDate date] : self.paper.date);
+        } else {
+            picker.date = self.chooseDate;
+        }
+    }];
+    [alert show];
+}
+
+#pragma mark - Getter
+
+- (UITableView *)tableView {
+    if (!_tableView) {
+        _tableView = [[UITableView alloc]initWithFrame:CGRectMake(0, [UIDevice statusBarHeight], [UIDevice deviceWidth], [UIDevice screenHeight]-[UIDevice statusBarHeight]) style:UITableViewStylePlain];
+        _tableView.delegate = self;
+        _tableView.dataSource = self;
+        [_tableView registerNib:[UINib nibWithNibName:@"MXPaperDetailTableViewCell" bundle:nil] forCellReuseIdentifier:@"cell"];
+        _tableView.backgroundColor = [UIColor whiteColor];
+        _tableView.separatorStyle = UITableViewCellSeparatorStyleNone;
+        _tableView.backgroundView = self.tableViewBackgroundView;
+        
+        _tableView.tableFooterView = self.buttonView;
+    }
+    return _tableView;
+}
+
+- (UIView *)tableViewBackgroundView {
+    if (!_tableViewBackgroundView) {
+        _tableViewBackgroundView = [[UIView alloc]initWithFrame:CGRectMake(0, 0, self.tableView.backgroundView.bounds.size.width, self.tableView.backgroundView.bounds.size.height)];
+        UILabel *label = [[UILabel alloc]init];
+        label.backgroundColor = self.topic.topicColor;
+        label.text = @"下拉V";
+        label.numberOfLines = 0;
+        label.textAlignment = NSTextAlignmentCenter;
+        label.textColor = [UIColor whiteColor];
+        label.font = [UIFont systemFontOfSize:13];
+        label.layer.cornerRadius = 5;
+        label.layer.masksToBounds = YES;
+        [_tableViewBackgroundView addSubview:label];
+        
+        [label mas_makeConstraints:^(MASConstraintMaker *make) {
+            make.centerX.equalTo(_tableViewBackgroundView);
+            make.top.equalTo(_tableViewBackgroundView).offset(20);
+            make.width.equalTo(@(20));
+        }];
+    }
+    return _tableViewBackgroundView;
+}
+
+- (UIView *)buttonView {
+    if (!_buttonView) {
+        _buttonView = [[UIView alloc]initWithFrame:CGRectMake(0, 0, [UIDevice deviceWidth], 100)];
+        
+        UIButton *button = [UIButton buttonWithType:UIButtonTypeCustom];
+        [button setTitle:@ "编辑事件内容" forState:UIControlStateNormal];
+        button.backgroundColor = ThemeColor;
+        button.titleLabel.font = [UIFont systemFontOfSize:17];
+        button.layer.cornerRadius = 5;
+        button.layer.masksToBounds = YES;
+        [button addTarget:self action:@selector(save) forControlEvents:UIControlEventTouchUpInside];
+        [_buttonView addSubview:button];
+        [button mas_makeConstraints:^(MASConstraintMaker *make) {
+            make.edges.equalTo(_buttonView).insets(UIEdgeInsetsMake(30, 10, 25, 10));
+        }];
+    }
+    return _buttonView;
+}
+
+- (void)didReceiveMemoryWarning {
+    [super didReceiveMemoryWarning];
+    // Dispose of any resources that can be recreated.
+}
+
+@end

@@ -1,0 +1,5 @@
+XSym
+0063
+44c51a4c1d6205210c27a193fac55c7b
+../../../Realm/include/RLMSyncPermissionOfferResponse_Private.h
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                
