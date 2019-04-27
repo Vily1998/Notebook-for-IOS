@@ -1,5 +1,5 @@
-# MXNotebook
-* A simple notebook for accounts using local-storage.
+# XNotebook
+* A simple notebook.
 * An example for Realm.
 * Customize view and animations.
 * Customize translations between controllers.
