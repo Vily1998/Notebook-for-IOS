@@ -7,6 +7,6 @@
 
 ## Usage
 ```
-git clone git@github.com:iamhmx/MxNotebook.git
+git clone https://github.com/Vily1998/Notebook-for-IOS.git
 pod install
 ```
